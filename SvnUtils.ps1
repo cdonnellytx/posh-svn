@@ -95,14 +95,27 @@ function Get-SvnBranchInfo {
 
     $pathBits = $url.Split("/", [StringSplitOptions]::RemoveEmptyEntries)
 
-    if($pathBits[0] -eq "trunk") {
-      $branch =  "trunk";
+    $branch = 'UNKNOWN'
+    for ($i = 0; $i -lt $pathBits.length; $i++) {
+        switch -regex ($pathBits[$i]) {
+            "trunk" {
+                $branch = $pathBits[$i]
+                break
+            }
+            "branches|tags" {
+                $next = $i + 1
+                if ($next -lt $pathBits.Length) {
+                    $branch = $pathBits[$next]
+                    break
+                }
+            }
+        }
     }
-    elseif($pathBits[0] -match "branches|tags") {
-      $branch = $pathBits[1]
+
+    return @{
+        "Branch" = $branch
+        "Revision" = $revision
     }
-    return @{"Branch" = $branch;
-             "Revision" = $revision}
   }
 }
 
