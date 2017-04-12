@@ -19,6 +19,8 @@ function Get-SvnInfo {
 }
 
 function Get-SvnStatus {
+    $settings = $Global:SvnPromptSettings
+
   if(IsSvnDirectory) {
     $untracked = 0
     $added = 0
@@ -36,11 +38,21 @@ function Get-SvnStatus {
     $info = Get-SvnInfo
     $hostName = ([System.Uri]$info[2].Replace("URL: ", "")).Host #URL: http://svnserver/trunk/test
 
-    if (Test-Connection -computername $hostName -Quiet -Count 1 -BufferSize 1) {
-        $status = svn status -u --ignore-externals
-    } else {
-        $status = svn status --ignore-externals
+    $statusArgs = @()
+
+    # EnableRemoteStatus: defaults to true
+    $showRemote = (-not $settings) -or $settings.EnableRemoteStatus
+    if ($showRemote -and (Test-Connection -computername $hostName -Quiet -Count 1 -BufferSize 1)) {
+        $statusArgs += '--show-updates'
     }
+
+    # EnableExternalFileStatus: defaults to false
+    $showExternalFiles = $settings -and $settings.EnableExternalFileStatus
+    if (!$showExternalFiles) {
+        $statusArgs += '--ignore-externals'
+    }
+
+    $status = svn status $statusArgs
 
     foreach($line in $status) {
         if ($line.StartsWith("Status"))

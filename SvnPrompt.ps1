@@ -23,6 +23,9 @@ $global:SvnPromptSettings = New-Object PSObject -Property @{
     IncomingStatusSymbol      = [char]0x2193 # Down arrow
     IncomingForegroundColor   = [ConsoleColor]::Red
     IncomingBackgroundColor   = $Host.UI.RawUI.BackgroundColor
+
+    EnableRemoteStatus        = $true   # show remote server status
+    EnableExternalFileStatus  = $false  # include files from externals in counts
 }
 
 function Write-SvnStatus($status) {
