@@ -24,6 +24,8 @@ $global:SvnPromptSettings = New-Object PSObject -Property @{
     IncomingForegroundColor   = [ConsoleColor]::Red
     IncomingBackgroundColor   = $Host.UI.RawUI.BackgroundColor
 
+    EnablePromptStatus        = !$Global:SvnMissing
+
     EnableRemoteStatus        = $true   # show remote server status
     EnableExternalFileStatus  = $false  # include files from externals in counts
 }
