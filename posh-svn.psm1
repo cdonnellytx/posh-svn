@@ -13,9 +13,23 @@ if ($psv.Major -lt 3 -and !$NoVersionWarn) {
 
 & $PSScriptRoot\CheckVersion.ps1 > $null
 
-. $PSScriptRoot\SvnUtils.ps1
-. $PSScriptRoot\SvnPrompt.ps1
-. $PSScriptRoot\SvnTabExpansion.ps1
+@('SvnUtils', 'SvnPrompt', 'SvnTabExpansion') |
+    ForEach-Object {
+        New-TimingInfo -Name $_ -Command {
+            # @see https://becomelotr.wordpress.com/2017/02/13/expensive-dot-sourcing/
+            $ExecutionContext.InvokeCommand.InvokeScript(
+                $false,
+                [scriptblock]::Create([io.file]::ReadAllText("${PSScriptRoot}\${_}.ps1", [Text.Encoding]::UTF8)),
+                $null,
+                $null
+            );
+        } 
+    }
+
+#. $PSScriptRoot\SvnUtils.ps1
+#. $PSScriptRoot\SvnPrompt.ps1
+#. $PSScriptRoot\SvnTabExpansion.ps1
+
 
 Export-ModuleMember -Function @(
     'Write-SvnStatus',
