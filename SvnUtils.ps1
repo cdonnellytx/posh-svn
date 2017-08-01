@@ -25,14 +25,20 @@ function Get-SvnDirectory() {
 }
 
 function Get-SvnInfo {
-    Try {
-        $info = svn info 2> $null
-        return $info
-    }
-    Catch
-    {
-        return $_.Exception.Message
-    }
+    [OutputType([Hashtable])]
+    param (
+    )
+    $result = @{}
+    svn info 2> $null |
+        Where-Object { $_ } |       # eat blank lines
+        ForEach-Object {
+            if ($_ -imatch '^(?<Name>[^:]*?)\s*:\s*(?<Value>.*?)\s*$') {
+                $result[$Matches['Name']] = $Matches['Value']
+            } else {
+                throw "ooops $_"
+            }
+        }
+    return $result
 }
 
 function Get-SvnStatus($svnDir = (Get-SvnDirectory)) {
@@ -53,7 +59,7 @@ function Get-SvnStatus($svnDir = (Get-SvnDirectory)) {
         $incomingRevision = 0
         $branchInfo = Get-SvnBranchInfo $svnDir
         $info = Get-SvnInfo
-        $hostName = ([System.Uri]$info[2].Replace("URL: ", "")).Host #URL: http://svnserver/trunk/test
+        $hostName = ([System.Uri]$info['URL']).Host #URL: http://svnserver/trunk/test
 
         $statusArgs = @()
 
@@ -102,57 +108,74 @@ function Get-SvnStatus($svnDir = (Get-SvnDirectory)) {
             }
         }
 
-        return @{"Untracked" = $untracked;
-                "Added" = $added;
-                "Modified" = $modified + $replaced;
-                "Deleted" = $deleted;
-                "Missing" = $missing;
-                "Conflicted" = $conflicted + $obstructed;
-                "External" = $external;
-                "Incoming" = $incoming
-                "Branch" = $branchInfo.Branch;
-                "Revision" = $branchInfo.Revision;
-                "IncomingRevision" = $incomingRevision;}
+        return @{
+            "Untracked" = $untracked;
+            "Added" = $added;
+            "Modified" = $modified + $replaced;
+            "Deleted" = $deleted;
+            "Missing" = $missing;
+            "Obstructed" = $obstructed;
+            "Conflicted" = $conflicted;
+            "External" = $external;
+            "Incoming" = $incoming
+            "Branch" = $branchInfo.Branch;
+            "Revision" = $branchInfo.Revision;
+            "IncomingRevision" = $incomingRevision;
+        }
     }
+}
+
+function Get-SvnBranchName([Uri] $uri) {
+    if (!$url) { return }
+
+
+    $pathBits = $uri.AbsolutePath.Split("/", [StringSplitOptions]::RemoveEmptyEntries)
+
+    for ($i = 0; $i -lt $pathBits.length; $i++) {
+        switch -regex ($pathBits[$i]) {
+            "trunk" {
+                return $pathBits[$i]
+            }
+            "branches|tags" {
+                $next = $i + 1
+                if ($next -lt $pathBits.Length) {
+                    return $pathBits[$next]
+                }
+            }
+        }
+    }
+
+    # just return the full URI
+    return $uri.ToString()
 }
 
 function Get-SvnBranchInfo($svnDir = $(Get-SvnDirectory)) {
     if (!$svnDir) { return }
 
     $info = Get-SvnInfo
-    $url = $info[3].Replace("Relative URL: ^/", "") #Relative URL: ^/trunk/test
-    $revision = $info[6].Replace("Revision: ", "") #Revision: 1234
+    try {
+    $url = [Uri]$info['URL']
+    $revision = $info['Revision']
 
-    $pathBits = $url.Split("/", [StringSplitOptions]::RemoveEmptyEntries)
-
-    $branch = 'UNKNOWN'
-    for ($i = 0; $i -lt $pathBits.length; $i++) {
-        switch -regex ($pathBits[$i]) {
-            "trunk" {
-                $branch = $pathBits[$i]
-                break
-            }
-            "branches|tags" {
-                $next = $i + 1
-                if ($next -lt $pathBits.Length) {
-                    $branch = $pathBits[$next]
-                    break
-                }
-            }
-        }
-    }
-
+    $branch = Get-SvnBranchName $url
     return @{
         "Branch" = $branch
         "Revision" = $revision
     }
+    }
+catch {
+    return @{
+        Branch = "eeeeeeeeeeeeeeeeeeeeeeeeeee url=${url}"
+        Revision = $_.Exception.ToString()
+    }
+}
 }
 
 function tsvn {
   if($args) {
     if($args[0] -eq "help") {
       #I don't like the built in help behaviour!
-      $tsvnCommands.keys | sort | % { write-host $_ }
+      $tsvnCommands.keys | Sort-Object | ForEach-Object { write-host $_ }
 
       return
     }

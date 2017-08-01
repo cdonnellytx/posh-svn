@@ -4,16 +4,16 @@
 ModuleToProcess = 'posh-svn.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.7.1'
+ModuleVersion = '0.7.100'
 
 # ID used to uniquely identify this module
 GUID = 'f18820b6-2e02-41b4-afc5-de886bb1b848'
 
 # Author of this module
-Author = 'Jeremy Skinner and contributors'
+Author = 'Chris Donnelly, Jeremy Skinner and contributors'
 
 # Copyright statement for this module
-Copyright = '(c) 2010-2017 Jeremy Skinner and contributors'
+Copyright = '(c) 2010-2017 Chris Donnelly, Jeremy Skinner and contributors'
 
 # Description of the functionality provided by this module
 Description = 'Provides prompt with Subversion status summary information and tab completion for Subversion commands, parameters, remotes and branch names.'

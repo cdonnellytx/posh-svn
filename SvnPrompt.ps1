@@ -85,4 +85,11 @@ $PoshSvnVcsPrompt = {
 }
 
 $Global:VcsPromptStatuses += $PoshSvnVcsPrompt
-$ExecutionContext.SessionState.Module.OnRemove = { $Global:VcsPromptStatuses = $Global:VcsPromptStatuses | ? { $_ -ne $PoshSvnVcsPrompt} }
+$ExecutionContext.SessionState.Module.OnRemove = {
+    $c = $Global:VcsPromptStatuses.Count
+    $global:VcsPromptStatuses = @( $global:VcsPromptStatuses | Where-Object { $_ -ne $PoshSvnVcsPrompt -and $_ -inotmatch '\bWrite-SvnStatus\b' } ) # cdonnelly 2017-08-01: if the script is redefined in a different module
+    
+    if ($c -ne 1 + $Global:VcsPromptStatuses.Count) {
+      Write-Warning "posh-svn: did not remove prompt"
+    }
+}
