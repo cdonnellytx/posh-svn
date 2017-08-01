@@ -117,8 +117,18 @@ function Get-SvnStatus($svnDir = (Get-SvnDirectory)) {
             }
         }
 
+
+        $title = ''
+        if ($settings.EnableWindowTitle)
+        {
+            $repoName = Split-Path -Leaf (Split-Path $svnDir)
+            $prefix = if ($settings.EnableWindowTitle -is [string]) { $settings.EnableWindowTitle } else { '' }
+            $title = "${prefix}${repoName} [$($branch)]"
+        }
+        
         return New-Object PSObject -Property @{
             SvnDir = $svnDir
+            TItle = $title;
             Untracked = $untracked;
             Added = $added;
             Modified = $modified + $replaced;
