@@ -26,10 +26,13 @@ function Get-SvnDirectory() {
 
 function Get-SvnInfo {
     [OutputType([Hashtable])]
-    param ()
+    param (
+        [ValidateNotNullOrEmpty()]
+        [string] $Path = '.'
+    )
     $result = @{}
     try {
-    svn info 2> $null |
+    svn info $Path 2> $null |
         Where-Object { $_ } |       # eat blank lines
         ForEach-Object {
             if ($_ -imatch '^(?<Name>[^:]*?)\s*:\s*(?<Value>.*?)\s*$') {
@@ -66,7 +69,7 @@ function Get-SvnStatus($svnDir = (Get-SvnDirectory)) {
         $obstructed = 0
         $incoming = 0
         $incomingRevision = 0
-        $info = Get-SvnInfo
+        $info = Get-SvnInfo $svnDir
         $branch = Get-SvnBranchName $info
         $hostName = ([System.Uri]$info['URL']).Host #URL: http://svnserver/trunk/test
 
@@ -165,8 +168,10 @@ function Get-SvnBranchName($info) {
         }
     }
 
-    # Just return the relative URL
-    return $info['Relative URL']
+    # Just return the relative URL for the root path.
+    # (In practice we just do current directory so don't bother seeing if our path is the root)
+    $rootInfo = Get-SvnInfo $info['Working Copy Root Path']
+    return $rootInfo['Relative URL']
 }
 
 function tsvn {
