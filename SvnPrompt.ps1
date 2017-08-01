@@ -28,12 +28,18 @@ $global:SvnPromptSettings = New-Object PSObject -Property @{
 
     EnableRemoteStatus        = $true   # show remote server status
     EnableExternalFileStatus  = $false  # include files from externals in counts
+
+    EnableWindowTitle                           = 'posh~svn ~ '
+}
+
+$WindowTitleSupported = $true
+if (Get-Module NuGet) {
+    $WindowTitleSupported = $false
 }
 
 function Write-SvnStatus($status) {
-    if ($status) {
-        $s = $global:SvnPromptSettings
-
+    $s = $global:SvnPromptSettings
+    if ($status -and $s) {
         Write-Prompt $s.BeforeText -NoNewline -BackgroundColor $s.BeforeBackgroundColor -ForegroundColor $s.BeforeForegroundColor
         Write-Prompt $status.Branch -NoNewline -BackgroundColor $s.BranchBackgroundColor -ForegroundColor $s.BranchForegroundColor
         Write-Prompt "@$($status.Revision)" -NoNewline -BackgroundColor $s.RevisionBackgroundColor -ForegroundColor $s.RevisionForegroundColor
@@ -70,6 +76,17 @@ function Write-SvnStatus($status) {
         }
 
         Write-Prompt $s.AfterText -NoNewline -BackgroundColor $s.AfterBackgroundColor -ForegroundColor $s.AfterForegroundColor
+
+        if ($WindowTitleSupported -and $s.EnableWindowTitle) {
+            if( -not $Global:PreviousWindowTitle ) {
+                $Global:PreviousWindowTitle = $Host.UI.RawUI.WindowTitle
+            }
+            $repoName = Split-Path -Leaf (Split-Path $status.SvnDir)
+            $prefix = if ($s.EnableWindowTitle -is [string]) { $s.EnableWindowTitle } else { '' }
+            $Host.UI.RawUI.WindowTitle = "$script:adminHeader$prefix$repoName [$($status.Branch)]"
+        }
+    } elseif ( $Global:PreviousWindowTitle ) {
+        $Host.UI.RawUI.WindowTitle = $Global:PreviousWindowTitle
     }
 }
 

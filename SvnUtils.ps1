@@ -26,19 +26,28 @@ function Get-SvnDirectory() {
 
 function Get-SvnInfo {
     [OutputType([Hashtable])]
-    param (
-    )
+    param ()
     $result = @{}
+    try {
     svn info 2> $null |
         Where-Object { $_ } |       # eat blank lines
         ForEach-Object {
             if ($_ -imatch '^(?<Name>[^:]*?)\s*:\s*(?<Value>.*?)\s*$') {
-                $result[$Matches['Name']] = $Matches['Value']
+                $name = $Matches.Name;
+                $value = switch ($name) {
+                    'URL' { [Uri] $Matches.Value }
+                    default { $Matches.Value }
+                }
+                $result.Add($name, $value)
             } else {
-                throw "ooops $_"
+                throw "line did not match expected pattern: '$_'"
             }
         }
     return $result
+    }
+catch {
+    throw "argh: $_"
+}
 }
 
 function Get-SvnStatus($svnDir = (Get-SvnDirectory)) {
@@ -57,8 +66,8 @@ function Get-SvnStatus($svnDir = (Get-SvnDirectory)) {
         $obstructed = 0
         $incoming = 0
         $incomingRevision = 0
-        $branchInfo = Get-SvnBranchInfo $svnDir
         $info = Get-SvnInfo
+        $branch = Get-SvnBranchName $info
         $hostName = ([System.Uri]$info['URL']).Host #URL: http://svnserver/trunk/test
 
         $statusArgs = @()
@@ -108,28 +117,29 @@ function Get-SvnStatus($svnDir = (Get-SvnDirectory)) {
             }
         }
 
-        return @{
-            "Untracked" = $untracked;
-            "Added" = $added;
-            "Modified" = $modified + $replaced;
-            "Deleted" = $deleted;
-            "Missing" = $missing;
-            "Obstructed" = $obstructed;
-            "Conflicted" = $conflicted;
-            "External" = $external;
-            "Incoming" = $incoming
-            "Branch" = $branchInfo.Branch;
-            "Revision" = $branchInfo.Revision;
-            "IncomingRevision" = $incomingRevision;
+        return New-Object PSObject -Property @{
+            SvnDir = $svnDir
+            Untracked = $untracked;
+            Added = $added;
+            Modified = $modified + $replaced;
+            Deleted = $deleted;
+            Missing = $missing;
+            Obstructed = $obstructed;
+            Conflicted = $conflicted;
+            External = $external;
+            Incoming = $incoming
+            Url = $info.Url
+            Branch = $branch;
+            Revision = $info.Revision;
+            IncomingRevision = $incomingRevision;
         }
     }
 }
 
-function Get-SvnBranchName([Uri] $uri) {
-    if (!$url) { return }
+function Get-SvnBranchName($info) {
+    if (!$info -or !$info.Url) { return }
 
-
-    $pathBits = $uri.AbsolutePath.Split("/", [StringSplitOptions]::RemoveEmptyEntries)
+    $pathBits = $info.Url.AbsolutePath.Split("/", [StringSplitOptions]::RemoveEmptyEntries)
 
     for ($i = 0; $i -lt $pathBits.length; $i++) {
         switch -regex ($pathBits[$i]) {
@@ -145,30 +155,8 @@ function Get-SvnBranchName([Uri] $uri) {
         }
     }
 
-    # just return the full URI
-    return $uri.ToString()
-}
-
-function Get-SvnBranchInfo($svnDir = $(Get-SvnDirectory)) {
-    if (!$svnDir) { return }
-
-    $info = Get-SvnInfo
-    try {
-    $url = [Uri]$info['URL']
-    $revision = $info['Revision']
-
-    $branch = Get-SvnBranchName $url
-    return @{
-        "Branch" = $branch
-        "Revision" = $revision
-    }
-    }
-catch {
-    return @{
-        Branch = "eeeeeeeeeeeeeeeeeeeeeeeeeee url=${url}"
-        Revision = $_.Exception.ToString()
-    }
-}
+    # Just return the relative URL
+    return $info['Relative URL']
 }
 
 function tsvn {
