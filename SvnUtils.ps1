@@ -131,14 +131,16 @@ function Get-SvnStatus($svnDir = (Get-SvnDirectory)) {
         
         return New-Object PSObject -Property @{
             SvnDir = $svnDir
-            TItle = $title;
-            Untracked = $untracked;
+            Title = $title;
             Added = $added;
             Modified = $modified + $replaced;
             Deleted = $deleted;
+            HasIndex = [bool]($added -or $modified -or $replaced -or $deleted)
+            Untracked = $untracked;
             Missing = $missing;
             Obstructed = $obstructed;
             Conflicted = $conflicted;
+            HasWorking = [bool]($untracked -or $missing -or $obstructed -or $conflicted)
             External = $external;
             Incoming = $incoming
             Url = $info.Url

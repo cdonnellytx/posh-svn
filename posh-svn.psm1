@@ -35,13 +35,27 @@ New-TimingInfo -Name CheckVersion -Command {
 @('SvnUtils', 'SvnPrompt', 'SvnTabExpansion') |
     ForEach-Object {
         New-TimingInfo -Name $_ -Command {
-            # @see https://becomelotr.wordpress.com/2017/02/13/expensive-dot-sourcing/
-            $ExecutionContext.InvokeCommand.InvokeScript(
-                $false,
-                [scriptblock]::Create([io.file]::ReadAllText("${PSScriptRoot}\${_}.ps1", [Text.Encoding]::UTF8)),
-                $null,
-                $null
-            );
+            try
+            {
+                # @see https://becomelotr.wordpress.com/2017/02/13/expensive-dot-sourcing/
+                $ExecutionContext.InvokeCommand.InvokeScript(
+                    $false,
+                    [scriptblock]::Create([io.file]::ReadAllText("${PSScriptRoot}\${_}.ps1", [Text.Encoding]::UTF8)),
+                    $null,
+                    $null
+                );
+            }
+            catch
+            {
+                $count = 0
+                $errors = for ($ex = $_.Exception; $ex; $ex = $ex.InnerException) {
+                    if ($count++ -gt 0) { "`n -----> " + $ex.ErrorRecord } else { $ex.ErrorRecord }
+                    "Stack trace:"
+                    $ex.ErrorRecord.ScriptStackTrace
+                }
+
+                throw "Cannot process script '${fullName}':`n$errors"
+            }            
         } 
     }
 
