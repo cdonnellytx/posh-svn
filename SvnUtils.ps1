@@ -87,16 +87,14 @@ function Get-SvnStatus($svnDir = (Get-SvnDirectory)) {
             $statusArgs += '--ignore-externals'
         }
 
-        $status = svn status $statusArgs
-
-        foreach($line in $status) {
-            if ($line.StartsWith("Status"))
+        svn status $statusArgs | ForEach-Object {
+            if ($_.StartsWith("Status"))
             {
-                $incomingRevision = [Int]$line.Replace("Status against revision:", "")
+                $incomingRevision = [Int]$_.Replace("Status against revision:", "")
             }
             else
             {
-                switch($line[0]) {
+                switch($_[0]) {
                     'A' { $added++; break; }
                     'C' { $conflicted++; break; }
                     'D' { $deleted++; break; }
@@ -108,13 +106,13 @@ function Get-SvnStatus($svnDir = (Get-SvnDirectory)) {
                     '!' { $missing++; break; }
                     '~' { $obstructed++; break; }
                 }
-                switch($line[4]) {
+                switch($_[4]) {
                     'X' { $external++; break; }
                 }
-                switch($line[6]) {
+                switch($_[6]) {
                     'C' { $conflicted++; break; }
                 }
-                switch($line[8]) {
+                switch($_[8]) {
                     '*' { $incoming++; break; }
                 }
             }

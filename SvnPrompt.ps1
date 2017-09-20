@@ -31,7 +31,7 @@ $global:SvnPromptSettings = [PSCustomObject]@{
     LocalStagedStatusForegroundColor        = Get-ConsoleThemeSafeColor Cyan
     LocalStagedStatusBackgroundColor        = $null
 
-    BranchForegroundColor                   = [ConsoleColor]::Cyan
+    BranchForegroundColor                   = Get-ConsoleThemeSafeColor Cyan
     BranchBackgroundColor                   = $null
 
     RevisionText                            = '@'
@@ -93,23 +93,11 @@ function Write-Prompt
     if (Test-ConsoleColor $BackgroundColor)
     {
         $writeHostParams.BackgroundColor = $BackgroundColor
-        if (Test-ConsoleColor $ForegroundColor)
-        {
-            # background color is set, we don't need "safe" color
-            $writeHostParams.ForegroundColor = $ForegroundColor
-        }
     }
-    elseif (Test-ConsoleColor $ForegroundColor)
+    
+    if (Test-ConsoleColor $ForegroundColor)
     {
-        # don't do safe colors unless it's actually the same.
-        if ($StrictSafeColors -and $ForegroundColor -ne $ConsoleTheme.Default.BackgroundColor)
-        {
-            $writeHostParams.ForegroundColor = $ForegroundColor
-        }
-        else
-        {
-            $writeHostParams.ForegroundColor = Get-ConsoleThemeSafeColor -Color $ForegroundColor
-        }
+        $writeHostParams.ForegroundColor = $ForegroundColor
     }
 
     Write-Host @writeHostParams
@@ -166,7 +154,7 @@ function Write-SvnStatus($status)
         if ($status.Incoming)
         {
             Write-Prompt " $($s.IncomingStatusSymbol)$($status.Incoming)" -BackgroundColor $s.IncomingBackgroundColor -ForegroundColor $s.IncomingForegroundColor
-            Write-Prompt "$($s.RevisionText)$($status.IncomingRevision)" -BackgroundColor $s.RevisionBackgroundColor -ForegroundColor $s.RevisionForegroundColor
+            Write-Prompt "$($s.RevisionText)$($status.IncomingRevision)" -BackgroundColor $s.RevisionBackgroundColor -ForegroundColor $s.RevisionForegroundColor -StrictSafeColors
         }
 
         if ($status.HasIndex)
