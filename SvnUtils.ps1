@@ -68,7 +68,7 @@ function Get-SvnStatus($svnDir = (Get-SvnDirectory)) {
         $external = 0
         $obstructed = 0
         $incoming = 0
-        $incomingRevision = 0
+        $incomingRevision = $null
         $info = Get-SvnInfo $svnDir
         $branch = Get-SvnBranchName $info
         $hostName = ([System.Uri]$info['URL']).Host #URL: http://svnserver/trunk/test
@@ -88,13 +88,37 @@ function Get-SvnStatus($svnDir = (Get-SvnDirectory)) {
         }
 
         svn status $statusArgs | ForEach-Object {
-            if ($_.StartsWith("Status"))
+            if ($_ -eq "")
             {
-                $incomingRevision = [Int]$_.Replace("Status against revision:", "")
+                # blank line between externals
+            }
+            elseif ($_.StartsWith("Status against revision:"))
+            {
+                if ($incomingRevision -eq $null)
+                {
+                    $incomingRevision = [Int]$_.Replace("Status against revision:", "")
+                }
+            }
+            elseif ($_.StartsWith("Performing status on external item at"))
+            {
+                # External
+                # ignore for now.
             }
             else
             {
                 switch($_[0]) {
+                    'A' { $added++; break; }
+                    'C' { $conflicted++; break; }
+                    'D' { $deleted++; break; }
+                    'I' { $ignored++; break; }
+                    'M' { $modified++; break; }
+                    'R' { $replaced++; break; }
+                    'X' { $external++; break; }
+                    '?' { $untracked++; break; }
+                    '!' { $missing++; break; }
+                    '~' { $obstructed++; break; }
+                }
+                switch($_[1]) {
                     'A' { $added++; break; }
                     'C' { $conflicted++; break; }
                     'D' { $deleted++; break; }
