@@ -18,7 +18,7 @@ $global:SvnPromptSettings = [PSCustomObject]@{
     FileModifiedText                        = '~'
     FileRemovedText                         = '-'
     FileConflictedText                      = '!'
-
+    
     LocalDefaultStatusSymbol                = $null
     LocalDefaultStatusForegroundColor       = Get-ConsoleThemeSafeColor Green
     LocalDefaultStatusBackgroundColor       = $null
@@ -137,17 +137,17 @@ function Write-SvnStatus($status)
 
             if ($status.Untracked)
             {
-                Write-Prompt " ?$($status.Untracked)" -BackgroundColor $s.WorkingBackgroundColor -ForegroundColor $s.WorkingForegroundColor
+                Write-Prompt " $($s.FileAddedText)$($status.Untracked)" -BackgroundColor $s.WorkingBackgroundColor -ForegroundColor $s.WorkingForegroundColor
             }
 
             if ($status.Missing)
             {
-                Write-Prompt " !$($status.Missing)" -BackgroundColor $s.WorkingBackgroundColor -ForegroundColor $s.WorkingForegroundColor
+                Write-Prompt " $($s.FileRemovedText)$($status.Missing)" -BackgroundColor $s.WorkingBackgroundColor -ForegroundColor $s.WorkingForegroundColor
             }
 
             if ($status.Conflicted)
             {
-                Write-Prompt " $($status.FileConflictedText)$($status.Conflicted)" -BackgroundColor $s.WorkingBackgroundColor -ForegroundColor $s.WorkingForegroundColor
+                Write-Prompt " $($s.FileConflictedText)$($status.Conflicted)" -BackgroundColor $s.WorkingBackgroundColor -ForegroundColor $s.WorkingForegroundColor
             }
         }
 
