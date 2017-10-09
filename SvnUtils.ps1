@@ -253,8 +253,6 @@ function Invoke-Svn {
         if ($lessCommands -contains $command) {
             # FIXME this shows the BOM when using Cygwin less, how do I not show BOM regardless of encoding?
             return & $svn $args | & $less $lessOpts
-        } else {
-            Write-Warning "command '$command' not in $lessCommands"
         }
     }
 
