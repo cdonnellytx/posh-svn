@@ -15,7 +15,7 @@ function SvnTabExpansion($lastBlock) {
 
 function svnCommands($filter) {
   $cmdList = @()
-  $output = svn help
+  $output = & $svn help
   foreach($line in $output) {
     if($line -match '^   (\S+)(.*)') {
       $cmd = $matches[1]

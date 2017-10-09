@@ -32,25 +32,25 @@ function Get-SvnInfo {
     )
     $result = @{}
     try {
-    svn info $Path 2> $null |
-        Where-Object { $_ } |       # eat blank lines
-        ForEach-Object {
-            if ($_ -imatch '^(?<Name>[^:]*?)\s*:\s*(?<Value>.*?)\s*$') {
-                $name = $Matches.Name;
-                $value = switch ($name) {
-                    'URL' { [Uri] $Matches.Value }
-                    default { $Matches.Value }
+        & $svn info $Path 2> $null |
+            Where-Object { $_ } |       # eat blank lines
+                ForEach-Object {
+                    if ($_ -imatch '^(?<Name>[^:]*?)\s*:\s*(?<Value>.*?)\s*$') {
+                        $name = $Matches.Name;
+                        $value = switch ($name) {
+                            'URL' { [Uri] $Matches.Value }
+                            default { $Matches.Value }
+                        }
+                        $result.Add($name, $value)
+                    } else {
+                        throw "line did not match expected pattern: '$_'"
+                    }
                 }
-                $result.Add($name, $value)
-            } else {
-                throw "line did not match expected pattern: '$_'"
-            }
+            return $result
         }
-    return $result
+    catch {
+        throw "argh: $_"
     }
-catch {
-    throw "argh: $_"
-}
 }
 
 function Get-SvnStatus($svnDir = (Get-SvnDirectory)) {
@@ -87,7 +87,7 @@ function Get-SvnStatus($svnDir = (Get-SvnDirectory)) {
             $statusArgs += '--ignore-externals'
         }
 
-        svn status $statusArgs | ForEach-Object {
+        & $svn status $statusArgs | ForEach-Object {
             if ($_ -eq "")
             {
                 # blank line between externals
@@ -222,6 +222,46 @@ function tsvn {
     tortoiseproc $newArgs
   }
 }
+
+function Find-SvnCommand([object[]] $ArgumentList) {
+    return $ArgumentList |
+        Where-Object { $_ -and ($_ -notlike '-*') } |
+        Select-Object -First 1
+}
+
+# Paginate svn commands that should have it.
+# svn doesn't have this built in (as of 1.9.7) so we have to do it ourselves.
+$less = Get-Command 'less' -ErrorAction SilentlyContinue
+if ($less) {
+    $lessCommands = @('help', 'log')
+    [string[]] $lessOpts = @()
+
+    if ($less.CommandType -eq 'Application') {
+        # ASSUMPTION: application (binary) == GNU less
+        $lessOpts = @(
+            '--no-init',             # don't clear the screen on exit
+            '--quit-if-one-screen'   # If the shell supports it, don't stay in less if the content fits on the screen.
+        )
+    }
+}
+
+
+
+function Invoke-Svn {
+    if ($less) {
+        $command = Find-SvnCommand -ArgumentList $args
+        if ($lessCommands -contains $command) {
+            # FIXME this shows the BOM when using Cygwin less, how do I not show BOM regardless of encoding?
+            return & $svn $args | & $less $lessOpts
+        } else {
+            Write-Warning "command '$command' not in $lessCommands"
+        }
+    }
+
+    & $svn $args
+}
+
+New-Alias -Name 'svn' -Value 'Invoke-Svn'
 
 function Get-AliasPattern($exe) {
   $aliases = @($exe) + @(Get-Alias | where { $_.Definition -eq $exe } | select -Exp Name)

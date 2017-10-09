@@ -4,7 +4,7 @@
 ModuleToProcess = 'posh-svn.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.7.202'
+ModuleVersion = '0.7.300'
 
 # ID used to uniquely identify this module
 GUID = 'f18820b6-2e02-41b4-afc5-de886bb1b848'
@@ -22,13 +22,7 @@ Description = 'Provides prompt with Subversion status summary information and ta
 PowerShellVersion = '2.0'
 
 # Functions to export from this module
-FunctionsToExport = @(
-    'Write-SvnStatus',
-    'Get-SvnStatus',
-    'Get-SvnInfo',
-    'TabExpansion',
-    'tsvn'
-)
+FunctionsToExport = '*'
 
 # Cmdlets to export from this module
 CmdletsToExport = @()
@@ -37,7 +31,7 @@ CmdletsToExport = @()
 VariablesToExport = @()
 
 # Aliases to export from this module
-AliasesToExport = @()
+AliasesToExport = '*'
 
 # Private data to pass to the module specified in RootModule/ModuleToProcess.
 # This may also contain a PSData hashtable with additional module metadata used by PowerShell.
