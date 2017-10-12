@@ -28,10 +28,10 @@ $global:SvnPromptSettings = [PSCustomObject]@{
     LocalWorkingStatusBackgroundColor       = $null
 
     LocalStagedStatusSymbol                 = '~'
-    LocalStagedStatusForegroundColor        = Get-ConsoleThemeSafeColor Cyan
+    LocalStagedStatusForegroundColor        = [ConsoleColor]::Cyan
     LocalStagedStatusBackgroundColor        = $null
 
-    BranchForegroundColor                   = Get-ConsoleThemeSafeColor Cyan
+    BranchForegroundColor                   = [ConsoleColor]::Cyan
     BranchBackgroundColor                   = $null
 
     RevisionText                            = '@'
@@ -77,9 +77,7 @@ function Write-Prompt {
         [Nullable[ConsoleColor]] $ForegroundColor = $SvnPromptSettings.DefaultForegroundColor,
 
         [Parameter(Mandatory = $false)]
-        [Nullable[ConsoleColor]] $BackgroundColor = $SvnPromptSettings.DefaultBackgroundColor,
-
-        [switch] $StrictSafeColors
+        [Nullable[ConsoleColor]] $BackgroundColor = $SvnPromptSettings.DefaultBackgroundColor
     )
 
     $writeHostParams = @{
@@ -103,7 +101,7 @@ function Write-SvnStatus($status) {
     if ($status -and $s) {
         Write-Prompt $s.BeforeText -BackgroundColor $s.BeforeBackgroundColor -ForegroundColor $s.BeforeForegroundColor
         Write-Prompt $status.Branch -BackgroundColor $s.BranchBackgroundColor -ForegroundColor $s.BranchForegroundColor
-        Write-Prompt "$($s.RevisionText)$($status.Revision)" -BackgroundColor $s.RevisionBackgroundColor -ForegroundColor $s.RevisionForegroundColor -StrictSafeColors
+        Write-Prompt "$($s.RevisionText)$($status.Revision)" -BackgroundColor $s.RevisionBackgroundColor -ForegroundColor $s.RevisionForegroundColor
 
         if ($status.HasIndex) {
             if ($s.ShowStatusWhenZero -or $status.Added) {
@@ -137,7 +135,7 @@ function Write-SvnStatus($status) {
 
         if ($status.Incoming) {
             Write-Prompt " $($s.IncomingStatusSymbol)$($status.Incoming)" -BackgroundColor $s.IncomingBackgroundColor -ForegroundColor $s.IncomingForegroundColor
-            Write-Prompt "$($s.RevisionText)$($status.IncomingRevision)" -BackgroundColor $s.RevisionBackgroundColor -ForegroundColor $s.RevisionForegroundColor -StrictSafeColors
+            Write-Prompt "$($s.RevisionText)$($status.IncomingRevision)" -BackgroundColor $s.RevisionBackgroundColor -ForegroundColor $s.RevisionForegroundColor
         }
 
         if ($status.HasIndex) {
@@ -164,7 +162,7 @@ function Write-SvnStatus($status) {
                 Write-Prompt $s.DelimText -BackgroundColor $s.DelimBackgroundColor -ForegroundColor $s.DelimForegroundColor
             }
 
-            Write-Prompt " $($s.ExternalStatusSymbol)$($status.External)" -BackgroundColor $s.ExternalBackgroundColor -ForegroundColor $s.ExternalForegroundColor -StrictSafeColors
+            Write-Prompt " $($s.ExternalStatusSymbol)$($status.External)" -BackgroundColor $s.ExternalBackgroundColor -ForegroundColor $s.ExternalForegroundColor
         }
 
         if ($localStatusSymbol) {

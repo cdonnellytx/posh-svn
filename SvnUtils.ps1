@@ -240,3 +240,68 @@ function Get-AliasPattern($exe) {
     $aliases = @($exe) + @(Get-Alias | Where-Object { $_.Definition -eq $exe } | Select-Object -Exp Name)
     "($($aliases -join '|'))"
 }
+
+#
+# Console colors
+#
+
+if (!(Get-Module ConsoleTheme)) {
+    # ConsoleTheme is a (currently private) module that helps with whether the console is light or dark, and chooses colors accordingly.
+    # Eventually I'll release it, but for now use these as fallbacks.
+
+    # Determine whether the shell is light or dark.
+    # Just assume background color gives us enough info for now.
+    $IsDark = switch -Wildcard ($Host.UI.RawUI.BackgroundColor) {
+        "Dark*" { $true }
+        "Black" { $true }
+        default { $false }
+    }
+
+    function Test-ConsoleColor {
+        [OutputType([bool])]
+        param (
+            [Parameter(Position = 0)]
+            [Nullable[ConsoleColor]] $Color
+        )
+
+        return $Color -ge 0
+    }
+
+    function Get-ConsoleThemeSafeColor {
+        [OutputType([ConsoleColor])]
+        param (
+            [ValidateNotNullOrEmpty()]
+            [Parameter(Position = 0, Mandatory = $true)]
+            [ConsoleColor] $Color
+        )
+
+        Write-Verbose "color=[$($Color.GetType().FullName)]$Color IsDark=$IsDark"
+
+        if ($IsDark) {
+            switch ($Color) {
+                DarkBlue    { [ConsoleColor]::Blue          }
+                DarkCyan    { [ConsoleColor]::Cyan          }
+                DarkGray    { [ConsoleColor]::Gray          }
+                DarkGreen   { [ConsoleColor]::Green         }
+                DarkMagenta { [ConsoleColor]::Magenta       }
+                DarkRed     { [ConsoleColor]::Red           }
+                DarkYellow  { [ConsoleColor]::Yellow        }
+                Black       { [ConsoleColor]::White         }
+                default     { $Color }
+            }
+        }
+        else {
+            switch ($Color) {
+                Blue        { [ConsoleColor]::DarkBlue      }
+                Cyan        { [ConsoleColor]::DarkCyan      }
+                Gray        { [ConsoleColor]::DarkGray      }
+                Green       { [ConsoleColor]::DarkGreen     }
+                Magenta     { [ConsoleColor]::DarkMagenta   }
+                Red         { [ConsoleColor]::DarkRed       }
+                Yellow      { [ConsoleColor]::DarkYellow    }
+                White       { [ConsoleColor]::Black         }
+                default     { $Color }
+            }
+        }
+    }
+}

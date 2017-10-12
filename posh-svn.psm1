@@ -1,4 +1,4 @@
-param([switch]$NoVersionWarn)
+param([switch] $NoVersionWarn)
 
 if (Get-Module posh-svn) { return }
 
@@ -61,11 +61,6 @@ New-TimingInfo -Name CheckVersion -Command {
         }
     }
 
-#. $PSScriptRoot\SvnUtils.ps1
-#. $PSScriptRoot\SvnPrompt.ps1
-#. $PSScriptRoot\SvnTabExpansion.ps1
-
-
 Export-ModuleMember -Function @(
     'Write-SvnStatus',
     'Get-SvnStatus',
@@ -73,6 +68,8 @@ Export-ModuleMember -Function @(
     'TabExpansion',
     'tsvn',
     'Invoke-Svn'
-) -Alias @('svn')
+) -Alias @(
+    'svn'
+)
 
 
