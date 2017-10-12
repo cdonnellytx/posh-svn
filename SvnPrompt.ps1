@@ -1,7 +1,7 @@
 $global:SvnPromptSettings = [PSCustomObject]@{
     DefaultForegroundColor                  = $null
     DefaultBackgroundColor                  = $null
-    
+
     BeforeText                              = ' ['
     BeforeForegroundColor                   = [ConsoleColor]::Yellow
     BeforeBackgroundColor                   = $null
@@ -18,7 +18,7 @@ $global:SvnPromptSettings = [PSCustomObject]@{
     FileModifiedText                        = '~'
     FileRemovedText                         = '-'
     FileConflictedText                      = '!'
-    
+
     LocalDefaultStatusSymbol                = $null
     LocalDefaultStatusForegroundColor       = Get-ConsoleThemeSafeColor Green
     LocalDefaultStatusBackgroundColor       = $null
@@ -37,7 +37,7 @@ $global:SvnPromptSettings = [PSCustomObject]@{
     RevisionText                            = '@'
     RevisionForegroundColor                 = [ConsoleColor]::DarkGray
     RevisionBackgroundColor                 = $null
-    
+
     IndexForegroundColor                    = Get-ConsoleThemeSafeColor Green
     IndexBackgroundColor                    = $null
 
@@ -64,21 +64,18 @@ $global:SvnPromptSettings = [PSCustomObject]@{
 }
 
 $WindowTitleSupported = $true
-if (Get-Module NuGet)
-{
+if (Get-Module NuGet) {
     $WindowTitleSupported = $false
 }
 
-function Write-Prompt
-{
-    param
-    (
+function Write-Prompt {
+    param (
         [Parameter(Position = 0, Mandatory = $true)]
         $Object,
-        
+
         [Parameter(Mandatory = $false)]
         [Nullable[ConsoleColor]] $ForegroundColor = $SvnPromptSettings.DefaultForegroundColor,
-        
+
         [Parameter(Mandatory = $false)]
         [Nullable[ConsoleColor]] $BackgroundColor = $SvnPromptSettings.DefaultBackgroundColor,
 
@@ -90,122 +87,100 @@ function Write-Prompt
         NoNewLine = $true;
     }
 
-    if (Test-ConsoleColor $BackgroundColor)
-    {
+    if (Test-ConsoleColor $BackgroundColor) {
         $writeHostParams.BackgroundColor = $BackgroundColor
     }
-    
-    if (Test-ConsoleColor $ForegroundColor)
-    {
+
+    if (Test-ConsoleColor $ForegroundColor) {
         $writeHostParams.ForegroundColor = $ForegroundColor
     }
 
     Write-Host @writeHostParams
 }
 
-function Write-SvnStatus($status)
-{
+function Write-SvnStatus($status) {
     $s = $global:SvnPromptSettings
-    if ($status -and $s)
-    {
+    if ($status -and $s) {
         Write-Prompt $s.BeforeText -BackgroundColor $s.BeforeBackgroundColor -ForegroundColor $s.BeforeForegroundColor
         Write-Prompt $status.Branch -BackgroundColor $s.BranchBackgroundColor -ForegroundColor $s.BranchForegroundColor
         Write-Prompt "$($s.RevisionText)$($status.Revision)" -BackgroundColor $s.RevisionBackgroundColor -ForegroundColor $s.RevisionForegroundColor -StrictSafeColors
 
-        if ($status.HasIndex)
-        {
-            if ($s.ShowStatusWhenZero -or $status.Added)
-            {
+        if ($status.HasIndex) {
+            if ($s.ShowStatusWhenZero -or $status.Added) {
                 Write-Prompt " $($s.FileAddedText)$($status.Added)" -BackgroundColor $s.IndexBackgroundColor -ForegroundColor $s.IndexForegroundColor
             }
-            if ($s.ShowStatusWhenZero -or $status.Modified)
-            {
+            if ($s.ShowStatusWhenZero -or $status.Modified) {
                 Write-Prompt " $($s.FileModifiedText)$($status.Modified)" -BackgroundColor $s.IndexBackgroundColor -ForegroundColor $s.IndexForegroundColor
             }
-            if ($s.ShowStatusWhenZero -or $status.Deleted)
-            {
+            if ($s.ShowStatusWhenZero -or $status.Deleted) {
                 Write-Prompt " $($s.FileRemovedText)$($status.Deleted)" -BackgroundColor $s.IndexBackgroundColor -ForegroundColor $s.IndexForegroundColor
             }
         }
 
-        if ($status.HasWorking)
-        {
-            if ($status.HasIndex)
-            {
+        if ($status.HasWorking) {
+            if ($status.HasIndex) {
                 Write-Prompt $s.DelimText -BackgroundColor $s.DelimBackgroundColor -ForegroundColor $s.DelimForegroundColor
             }
 
-            if ($status.Untracked)
-            {
+            if ($status.Untracked) {
                 Write-Prompt " $($s.FileAddedText)$($status.Untracked)" -BackgroundColor $s.WorkingBackgroundColor -ForegroundColor $s.WorkingForegroundColor
             }
 
-            if ($status.Missing)
-            {
+            if ($status.Missing) {
                 Write-Prompt " $($s.FileRemovedText)$($status.Missing)" -BackgroundColor $s.WorkingBackgroundColor -ForegroundColor $s.WorkingForegroundColor
             }
 
-            if ($status.Conflicted)
-            {
+            if ($status.Conflicted) {
                 Write-Prompt " $($s.FileConflictedText)$($status.Conflicted)" -BackgroundColor $s.WorkingBackgroundColor -ForegroundColor $s.WorkingForegroundColor
             }
         }
 
-        if ($status.Incoming)
-        {
+        if ($status.Incoming) {
             Write-Prompt " $($s.IncomingStatusSymbol)$($status.Incoming)" -BackgroundColor $s.IncomingBackgroundColor -ForegroundColor $s.IncomingForegroundColor
             Write-Prompt "$($s.RevisionText)$($status.IncomingRevision)" -BackgroundColor $s.RevisionBackgroundColor -ForegroundColor $s.RevisionForegroundColor -StrictSafeColors
         }
 
-        if ($status.HasIndex)
-        {
+        if ($status.HasIndex) {
             # We have uncommitted files
             $localStatusSymbol          = $s.LocalStagedStatusSymbol
             $localStatusBackgroundColor = $s.LocalStagedStatusBackgroundColor
             $localStatusForegroundColor = $s.LocalStagedStatusForegroundColor
         }
-        elseif ($status.HasWorking)
-        {
+        elseif ($status.HasWorking) {
             # We have uncommitted files
             $localStatusSymbol          = $s.LocalWorkingStatusSymbol
             $localStatusBackgroundColor = $s.LocalWorkingStatusBackgroundColor
             $localStatusForegroundColor = $s.LocalWorkingStatusForegroundColor
         }
-        else
-        {
+        else {
             # No uncommited changes
             $localStatusSymbol          = $s.LocalDefaultStatusSymbol
             $localStatusBackgroundColor = $s.LocalDefaultStatusBackgroundColor
             $localStatusForegroundColor = $s.LocalDefaultStatusForegroundColor
         }
 
-        if ($s.ShowExternals -and $status.External)
-        {
-            if ($status.HasWorking -or $status.HasIndex)
-            {
+        if ($s.ShowExternals -and $status.External) {
+            if ($status.HasWorking -or $status.HasIndex) {
                 Write-Prompt $s.DelimText -BackgroundColor $s.DelimBackgroundColor -ForegroundColor $s.DelimForegroundColor
             }
-                
+
             Write-Prompt " $($s.ExternalStatusSymbol)$($status.External)" -BackgroundColor $s.ExternalBackgroundColor -ForegroundColor $s.ExternalForegroundColor -StrictSafeColors
         }
 
-        if ($localStatusSymbol)
-        {
+        if ($localStatusSymbol) {
             Write-Prompt (" {0}" -f $localStatusSymbol) -BackgroundColor $localStatusBackgroundColor -ForegroundColor $localStatusForegroundColor
         }
 
         Write-Prompt $s.AfterText -BackgroundColor $s.AfterBackgroundColor -ForegroundColor $s.AfterForegroundColor
 
-        if ($WindowTitleSupported -and $status.Title)
-        {
+        if ($WindowTitleSupported -and $status.Title) {
             $Global:CurrentWindowTitle += ' ~ ' + $status.Title
         }
     }
 }
 
 # Should match https://github.com/dahlbyk/posh-git/blob/master/GitPrompt.ps1
-if (!(Test-Path Variable:Global:VcsPromptStatuses))
-{
+if (!(Test-Path Variable:Global:VcsPromptStatuses)) {
     $Global:VcsPromptStatuses = @()
 }
 
@@ -219,9 +194,8 @@ $Global:VcsPromptStatuses += $PoshSvnVcsPrompt
 $ExecutionContext.SessionState.Module.OnRemove = {
     $c = $Global:VcsPromptStatuses.Count
     $global:VcsPromptStatuses = @( $global:VcsPromptStatuses | Where-Object { $_ -ne $PoshSvnVcsPrompt -and $_ -inotmatch '\bWrite-SvnStatus\b' } ) # cdonnelly 2017-08-01: if the script is redefined in a different module
-    
-    if ($c -ne 1 + $Global:VcsPromptStatuses.Count)
-    {
+
+    if ($c -ne 1 + $Global:VcsPromptStatuses.Count) {
         Write-Warning "posh-svn: did not remove prompt"
     }
 }

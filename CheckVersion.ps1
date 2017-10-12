@@ -14,6 +14,7 @@ if ([String](svn --version 2> $null) -match '(?<ver>\d+(?:\.\d+)+)') {
 if ($version -lt $requiredVersion) {
     Write-Warning "posh-svn requires Subversion $requiredVersion or better. You have $version."
     $false
-} else {
+}
+else {
     $true
 }

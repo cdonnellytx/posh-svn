@@ -37,7 +37,8 @@ function Get-SvnInfo {
                             default { $Matches.Value }
                         }
                         $result.Add($name, $value)
-                    } else {
+                    }
+                    else {
                         throw "line did not match expected pattern: '$_'"
                     }
                 }
@@ -83,24 +84,19 @@ function Get-SvnStatus($svnDir = (Get-SvnDirectory)) {
         }
 
         & $svn status $statusArgs | ForEach-Object {
-            if ($_ -eq "")
-            {
+            if ($_ -eq "") {
                 # blank line between externals
             }
-            elseif ($_.StartsWith("Status against revision:"))
-            {
-                if ($incomingRevision -eq $null)
-                {
+            elseif ($_.StartsWith("Status against revision:")) {
+                if ($incomingRevision -eq $null) {
                     $incomingRevision = [Int]$_.Replace("Status against revision:", "")
                 }
             }
-            elseif ($_.StartsWith("Performing status on external item at"))
-            {
+            elseif ($_.StartsWith("Performing status on external item at")) {
                 # External
                 # ignore for now.
             }
-            else
-            {
+            else {
                 switch($_[0]) {
                     'A' { $added++; break; }
                     'C' { $conflicted++; break; }
@@ -139,13 +135,12 @@ function Get-SvnStatus($svnDir = (Get-SvnDirectory)) {
 
 
         $title = ''
-        if ($settings.EnableWindowTitle)
-        {
+        if ($settings.EnableWindowTitle) {
             $repoName = Split-Path -Leaf (Split-Path $svnDir)
             $prefix = if ($settings.EnableWindowTitle -is [string]) { $settings.EnableWindowTitle } else { '' }
             $title = "${prefix}${repoName} [$($branch)]"
         }
-        
+
         return New-Object PSObject -Property @{
             SvnDir = $svnDir
             Title = $title;
@@ -194,28 +189,28 @@ function Get-SvnBranchName($info) {
 }
 
 function tsvn {
-  if($args) {
-    if($args[0] -eq "help") {
-      #I don't like the built in help behaviour!
-      $tsvnCommands.keys | Sort-Object | ForEach-Object { write-host $_ }
+    if ($args) {
+        if ($args[0] -eq "help") {
+            #I don't like the built in help behaviour!
+            $tsvnCommands.keys | Sort-Object | ForEach-Object { write-host $_ }
 
-      return
+            return
+        }
+
+        $newArgs = @()
+        $newArgs += "/command:" + $args[0]
+
+        $cmd = $tsvnCommands[$args[0]]
+        if ($cmd -and $cmd.useCurrentDirectory) {
+            $newArgs += "/path:."
+        }
+
+        if ($args.length -gt 1) {
+            $args[1..$args.length] | % { $newArgs += $_ }
+        }
+
+        tortoiseproc $newArgs
     }
-
-    $newArgs = @()
-    $newArgs += "/command:" + $args[0]
-
-    $cmd = $tsvnCommands[$args[0]]
-    if($cmd -and $cmd.useCurrentDirectory) {
-       $newArgs += "/path:."
-    }
-
-    if($args.length -gt 1) {
-      $args[1..$args.length] | % { $newArgs += $_ }
-    }
-
-    tortoiseproc $newArgs
-  }
 }
 
 function Find-SvnCommand([object[]] $ArgumentList) {
@@ -242,6 +237,6 @@ function Invoke-Svn {
 New-Alias -Name 'svn' -Value 'Invoke-Svn'
 
 function Get-AliasPattern($exe) {
-    $aliases = @($exe) + @(Get-Alias | Where-Object { $_.Definition -eq $exe } | select -Exp Name)
+    $aliases = @($exe) + @(Get-Alias | Where-Object { $_.Definition -eq $exe } | Select-Object -Exp Name)
     "($($aliases -join '|'))"
 }
