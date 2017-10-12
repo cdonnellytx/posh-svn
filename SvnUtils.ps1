@@ -6,18 +6,13 @@ function Get-SvnDirectory() {
     else {
         $currentDir = Get-Item $pathInfo -Force
         while ($currentDir) {
-            $svnDirPath = Join-Path $currentDir.FullName .svn
-            if (Test-Path -LiteralPath $svnDirPath -PathType Container) {
-                return $svnDirPath
+            $svnPath = Join-Path $currentDir.FullName .svn
+            if (Test-Path -LiteralPath $svnPath -PathType Container) {
+                # return the original path, NOT the .svn path
+                return $currentDir.FullName
             }
 
-            # Handle the worktree case where .git is a file
-            if (Test-Path -LiteralPath $svnDirPath -PathType Leaf) {
-                $svnDirPath = Invoke-Utf8ConsoleCommand { git rev-parse --git-dir 2>$null }
-                if ($svnDirPath) {
-                    return $svnDirPath
-                }
-            }
+            # .svn can't be a file, so nothing else to try
 
             $currentDir = $currentDir.Parent
         }
@@ -231,17 +226,13 @@ function Find-SvnCommand([object[]] $ArgumentList) {
 
 # Paginate svn commands that should have it.
 # svn doesn't have this built in (as of 1.9.7) so we have to do it ourselves.
-$less = Get-Command 'less' -ErrorAction SilentlyContinue
-if ($less) {
-    $lessCommands = @('diff', 'help', 'log')
-}
+$pagerCommands = @('diff', 'help', 'log')
 
 function Invoke-Svn {
-    if ($less) {
+    if ($Env:PAGER) {
         $command = Find-SvnCommand -ArgumentList $args
-        if ($lessCommands -contains $command) {
-            # FIXME this shows the BOM when using Cygwin less, how do I not show BOM regardless of encoding?
-            return & $svn $args | & $less $lessOpts
+        if ($pagerCommands -contains $command) {
+            return & $svn $args | & $Env:PAGER
         }
     }
 
@@ -251,6 +242,6 @@ function Invoke-Svn {
 New-Alias -Name 'svn' -Value 'Invoke-Svn'
 
 function Get-AliasPattern($exe) {
-  $aliases = @($exe) + @(Get-Alias | where { $_.Definition -eq $exe } | select -Exp Name)
-  "($($aliases -join '|'))"
+    $aliases = @($exe) + @(Get-Alias | Where-Object { $_.Definition -eq $exe } | select -Exp Name)
+    "($($aliases -join '|'))"
 }
