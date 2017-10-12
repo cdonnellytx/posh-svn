@@ -4,7 +4,7 @@
 ModuleToProcess = 'posh-svn.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.7.300'
+ModuleVersion = '0.7.301'
 
 # ID used to uniquely identify this module
 GUID = 'f18820b6-2e02-41b4-afc5-de886bb1b848'

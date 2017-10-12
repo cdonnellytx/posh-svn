@@ -233,19 +233,8 @@ function Find-SvnCommand([object[]] $ArgumentList) {
 # svn doesn't have this built in (as of 1.9.7) so we have to do it ourselves.
 $less = Get-Command 'less' -ErrorAction SilentlyContinue
 if ($less) {
-    $lessCommands = @('help', 'log')
-    [string[]] $lessOpts = @()
-
-    if ($less.CommandType -eq 'Application') {
-        # ASSUMPTION: application (binary) == GNU less
-        $lessOpts = @(
-            '--no-init',             # don't clear the screen on exit
-            '--quit-if-one-screen'   # If the shell supports it, don't stay in less if the content fits on the screen.
-        )
-    }
+    $lessCommands = @('diff', 'help', 'log')
 }
-
-
 
 function Invoke-Svn {
     if ($less) {
