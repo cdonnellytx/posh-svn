@@ -36,6 +36,9 @@ New-TimingInfo -Name CheckVersion -Command {
     }
 }
 
+# TODO when was ScriptStackTrace added? It's not in 2.0...
+$ScriptStackTraceMinVersion = [Version]'3.0'
+
 @('SvnUtils', 'SvnPrompt', 'SvnTabExpansion') |
     ForEach-Object {
         New-TimingInfo -Name $_ -Command {
@@ -52,8 +55,11 @@ New-TimingInfo -Name CheckVersion -Command {
                 $count = 0
                 $errors = for ($ex = $_.Exception; $ex; $ex = $ex.InnerException) {
                     if ($count++ -gt 0) { "`n -----> " + $ex.ErrorRecord } else { $ex.ErrorRecord }
-                    "Stack trace:"
-                    $ex.ErrorRecord.ScriptStackTrace
+                    if ($PSVersionTable.PSVersion -ge $ScriptStackTraceMinVersion)
+                    {
+                        "Stack trace:"
+                        $ex.ErrorRecord.ScriptStackTrace
+                    }
                 }
 
                 throw "Cannot process script '${fullName}':`n$errors"
