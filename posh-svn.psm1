@@ -53,12 +53,18 @@ $ScriptStackTraceMinVersion = [Version]'3.0'
             }
             catch {
                 $count = 0
-                $errors = for ($ex = $_.Exception; $ex; $ex = $ex.InnerException) {
-                    if ($count++ -gt 0) { "`n -----> " + $ex.ErrorRecord } else { $ex.ErrorRecord }
-                    if ($PSVersionTable.PSVersion -ge $ScriptStackTraceMinVersion)
-                    {
+                if ($PSVersionTable.PSVersion -ge $ScriptStackTraceMinVersion)
+                {
+                    $errors = for ($ex = $_.Exception; $ex; $ex = $ex.InnerException) {
+                        if ($count++ -gt 0) { "`n -----> " + $ex.ErrorRecord } else { $ex.ErrorRecord }
                         "Stack trace:"
                         $ex.ErrorRecord.ScriptStackTrace
+                    }
+                }
+                else
+                {
+                    $errors = for ($ex = $_.Exception; $ex; $ex = $ex.InnerException) {
+                        if ($count++ -gt 0) { "`n -----> " + $ex } else { $ex }
                     }
                 }
 
