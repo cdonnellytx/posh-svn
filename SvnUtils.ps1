@@ -225,6 +225,9 @@ $pagerCommands = @('diff', 'help', 'log')
 
 function Invoke-Svn {
     if ($Env:PAGER) {
+        # Set local output encoding to CONSOLE output to make sure BOMs don't show up in the UI if the user set their encoding to UTF8/UTF16
+        $OutputEncoding = [System.Console]::OutputEncoding
+
         $command = Find-SvnCommand -ArgumentList $args
         if ($pagerCommands -contains $command) {
             return & $svn $args | & $Env:PAGER
