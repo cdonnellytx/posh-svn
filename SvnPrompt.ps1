@@ -20,11 +20,11 @@ $global:SvnPromptSettings = [PSCustomObject]@{
     FileConflictedText                      = '!'
 
     LocalDefaultStatusSymbol                = $null
-    LocalDefaultStatusForegroundColor       = Get-ConsoleThemeSafeColor Green
+    LocalDefaultStatusForegroundColor       = [ConsoleColor]::DarkGreen
     LocalDefaultStatusBackgroundColor       = $null
 
     LocalWorkingStatusSymbol                = '!'
-    LocalWorkingStatusForegroundColor       = Get-ConsoleThemeSafeColor Red
+    LocalWorkingStatusForegroundColor       = [ConsoleColor]::DarkRed
     LocalWorkingStatusBackgroundColor       = $null
 
     LocalStagedStatusSymbol                 = '~'
@@ -38,10 +38,10 @@ $global:SvnPromptSettings = [PSCustomObject]@{
     RevisionForegroundColor                 = [ConsoleColor]::DarkGray
     RevisionBackgroundColor                 = $null
 
-    IndexForegroundColor                    = Get-ConsoleThemeSafeColor Green
+    IndexForegroundColor                    = [ConsoleColor]::DarkGreen
     IndexBackgroundColor                    = $null
 
-    WorkingForegroundColor                  = Get-ConsoleThemeSafeColor Red
+    WorkingForegroundColor                  = [ConsoleColor]::DarkRed
     WorkingBackgroundColor                  = $null
 
     ExternalStatusSymbol                    = [char]0x2190 # arrow right
