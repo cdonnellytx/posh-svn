@@ -14,62 +14,50 @@ if ($psv.Major -lt 3 -and !$NoVersionWarn) {
 # Refer to svn application command via this, as we alias it.
 $svn = $null
 
-# & $PSScriptRoot\CheckVersion.ps1 > $null
-New-TimingInfo -Name CheckVersion -Command {
-    $Global:SvnMissing = $false
-
-    $svn = Get-Command 'svn' -CommandType Application -TotalCount 1 -ErrorAction SilentlyContinue
-    if (!$svn) {
-        Write-Warning "svn application command could not be found. Please create an alias or add it to your PATH."
-        $Global:SvnMissing = $true
-        return
+if ($psv.Major -ge 3) {
+    function Invoke-ProfileScript([string] $fullName) {
+        # @see https://becomelotr.wordpress.com/2017/02/13/expensive-dot-sourcing/
+        $ExecutionContext.InvokeCommand.InvokeScript(
+            $false,
+            [scriptblock]::Create([io.file]::ReadAllText($fullName, [Text.Encoding]::UTF8)),
+            $null,
+            $null
+        );
     }
 
-    # HACK determine a minimum required version, 1.6.0 is a guess
-    $requiredVersion = [Version]'1.6.0'
-    if ([String](& $svn --version 2> $null) -match '(?<ver>\d+(?:\.\d+)+)') {
-        $version = [Version]$Matches['ver']
+    function Get-ProfileScriptErrors([System.Management.Automation.ErrorRecord] $err) {
+        $count = 0
+        for ($ex = $_.Exception; $ex; $ex = $ex.InnerException) {
+            if ($count++ -gt 0) { "`n -----> " + $ex.ErrorRecord } else { $ex.ErrorRecord }
+            "Stack trace:"
+            $ex.ErrorRecord.ScriptStackTrace
+        }
     }
-    if ($version -lt $requiredVersion) {
-        Write-Warning "posh-svn requires Subversion $requiredVersion or better. You have $version."
-        return
+}
+else {
+    # PowerShell 2.0: use the cut-down version
+    function Invoke-ProfileScript([string] $fullName) {
+        . $fullName
+    }
+
+    function Get-ProfileScriptErrors([System.Management.Automation.ErrorRecord] $err) {
+        $errors = @()
+        for ($ex = $err.Exception; $ex; $ex = $ex.InnerException) {
+            $errors += $ex
+        }
+        return $errors
     }
 }
 
-# TODO when was ScriptStackTrace added? It's not in 2.0...
-$ScriptStackTraceMinVersion = [Version]'3.0'
-
-@('SvnUtils', 'SvnPrompt', 'SvnTabExpansion') |
+@('CheckVersion', 'SvnUtils', 'SvnPrompt', 'SvnTabExpansion') |
     ForEach-Object {
-        New-TimingInfo -Name $_ -Command {
-            try {
-                # @see https://becomelotr.wordpress.com/2017/02/13/expensive-dot-sourcing/
-                $ExecutionContext.InvokeCommand.InvokeScript(
-                    $false,
-                    [scriptblock]::Create([io.file]::ReadAllText("${PSScriptRoot}\${_}.ps1", [Text.Encoding]::UTF8)),
-                    $null,
-                    $null
-                );
-            }
-            catch {
-                $count = 0
-                if ($PSVersionTable.PSVersion -ge $ScriptStackTraceMinVersion)
-                {
-                    $errors = for ($ex = $_.Exception; $ex; $ex = $ex.InnerException) {
-                        if ($count++ -gt 0) { "`n -----> " + $ex.ErrorRecord } else { $ex.ErrorRecord }
-                        "Stack trace:"
-                        $ex.ErrorRecord.ScriptStackTrace
-                    }
-                }
-                else
-                {
-                    $errors = for ($ex = $_.Exception; $ex; $ex = $ex.InnerException) {
-                        if ($count++ -gt 0) { "`n -----> " + $ex } else { $ex }
-                    }
-                }
-
-                throw "Cannot process script '${fullName}':`n$errors"
-            }
+        $scriptName = $_
+        try {
+            Invoke-ProfileScript $scriptName
+        }
+        catch {
+            $errors = Get-ProfileScriptErrors $_
+            Write-Error "Cannot process script '${scriptName}':`n${errors}"
         }
     }
 
