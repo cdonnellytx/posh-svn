@@ -1,6 +1,5 @@
 $Global:SvnMissing = $false
 
-$svn = $null
 $svn = Get-Command 'svn' -CommandType Application -TotalCount 1 -ErrorAction SilentlyContinue
 if (!$svn) {
     Write-Warning "svn application command could not be found. Please add it to your PATH."
@@ -17,3 +16,4 @@ if ($version -lt $requiredVersion) {
     Write-Warning "posh-svn requires Subversion $requiredVersion or better. You have $version."
     return
 }
+
