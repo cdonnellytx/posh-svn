@@ -51,13 +51,13 @@ else {
 
 @('CheckVersion', 'SvnUtils', 'SvnPrompt', 'SvnTabExpansion') |
     ForEach-Object {
-        $scriptName = $_
+        $fullName = Join-Path '.' "${_}.ps1"
         try {
-            Invoke-ProfileScript $scriptName
+            Invoke-ProfileScript $fullName
         }
         catch {
             $errors = Get-ProfileScriptErrors $_
-            Write-Error "Cannot process script '${scriptName}':`n${errors}"
+            Write-Error "Cannot process script '${fullName}':`n${errors}"
         }
     }
 
